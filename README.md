@@ -1,71 +1,50 @@
-# 미니 게임 모음
-
-브라우저에서 바로 즐길 수 있는 간단한 웹 게임 모음입니다.
-
-## 실행 방법
-
-### 로컬 (게임만)
-
-`index.html` 파일을 브라우저에서 열면 게임 목록이 표시됩니다.
-
-```bash
-npx serve .
-```
-
-> 챗봇은 Vercel API가 필요하므로 로컬 정적 서버에서는 동작하지 않습니다.
-
-### Vercel 배포 (게임 + 챗봇)
-
-1. [Vercel](https://vercel.com)에 이 저장소를 연결합니다.
-2. **Settings → Environment Variables**에 아래 변수를 추가합니다.
-
-| 이름 | 값 |
-|------|-----|
-| `GEMINI_API_KEY` | Google AI Studio에서 발급한 API 키 |
-
-3. 배포 후 `chat.html`에서 게임 가이드 봇을 사용할 수 있습니다.
-
-로컬에서 API까지 테스트하려면:
-
-```bash
-npm i -g vercel
-vercel dev
-```
-
-## 게임 목록
-
-### 🪜 사다리 타기 (`ladder.html`)
-
-1. 참가자와 결과를 입력합니다.
-2. **사다리 생성** 버튼을 누릅니다.
-3. 위쪽 참가자 이름을 클릭하면 경로가 따라 내려가며 결과가 표시됩니다.
-
-### ⚡ 반응속도 테스트 (`reaction.html`)
-
-1. 화면을 클릭해 시작합니다.
-2. 빨간색일 때는 기다립니다.
-3. 초록색이 되면 최대한 빨리 클릭해 반응속도(ms)를 확인합니다.
-
-### ✊ 가위바위보 (`rps.html`)
-
-1. 가위, 바위, 보 중 하나를 선택합니다.
-2. 컴퓨터와 승패를 겨룹니다.
-3. 승·패·무·연승 기록을 확인하며 계속 도전할 수 있습니다.
-
-### ⭕ 틱택토 (`ttt.html`)
-
-1. 3×3 보드에서 X를 놓습니다.
-2. 컴퓨터(O)와 번갈아 두며 가로·세로·대각선을 완성합니다.
-3. 승·패·무 기록을 확인하며 다시 도전할 수 있습니다.
-
-### 🃏 기억력 카드 (`memory.html`)
-
-1. 뒤집힌 카드 두 장을 골라 같은 그림을 찾습니다.
-2. 8쌍을 모두 맞추면 클리어입니다.
-3. 이동 횟수와 최고 기록에 도전해 보세요.
-
-### 💬 게임 가이드 봇 (`chat.html`)
-
-- Gemini 2.5 Flash 모델로 각 게임의 규칙과 플레이 방법을 안내합니다.
-- API 키는 서버(Vercel 환경 변수 `GEMINI_API_KEY`)에만 저장되며 클라이언트에 노출되지 않습니다.
-
+# 미니 게임 모음
+
+브라우저에서 바로 즐길 수 있는 간단한 웹 게임 모음입니다.
+
+## 배포 안내 (중요)
+
+| 방식 | 게임 | 챗봇 |
+|------|------|------|
+| GitHub Pages | ✅ | Vercel API 연동 필요 |
+| Vercel | ✅ | ✅ (API 키 설정 시) |
+
+### GitHub Pages
+
+1. GitHub 저장소 → **Settings → Pages**
+2. **Source**를 **GitHub Actions**로 선택
+3. `main` 브랜치 push 시 자동 배포
+4. 주소: `https://srkim2196-max.github.io/vibecoding_260622/`
+
+> GitHub Pages는 정적 파일만 제공합니다. 챗봇 API는 Vercel에서 실행됩니다.
+
+### Vercel (챗봇 API)
+
+1. [Vercel](https://vercel.com)에서 GitHub 저장소 연결
+2. **Settings → Environment Variables** → `GEMINI_API_KEY` 추가
+3. **Deployments → Redeploy** (환경 변수 추가 후 필수!)
+4. 주소: `https://vibecoding-260622.vercel.app`
+
+GitHub Pages에서 챗봇을 쓰려면 Vercel에 `GEMINI_API_KEY`가 설정되어 있어야 합니다.
+
+## 실행 방법
+
+```bash
+# 게임만 (로컬)
+npx serve .
+
+# 게임 + 챗봇 (로컬)
+npm i -g vercel
+vercel dev
+```
+
+## 게임 목록
+
+### 🪜 사다리 타기 (`ladder.html`)
+### ⚡ 반응속도 테스트 (`reaction.html`)
+### ✊ 가위바위보 (`rps.html`)
+### ⭕ 틱택토 (`ttt.html`)
+### 🃏 기억력 카드 (`memory.html`)
+### 💬 게임 가이드 봇 (`chat.html`)
+
+챗봇은 Gemini 2.5 Flash를 사용하며, API 키는 Vercel 서버에만 저장됩니다.

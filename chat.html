@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>게임 가이드 봇</title>
   <link rel="stylesheet" href="style.css">
+  <script src="config.js"></script>
 </head>
 <body>
   <div class="page-shell">
@@ -20,6 +21,8 @@
         <h1>💬 게임 가이드 봇</h1>
         <p class="subtitle">각 게임의 규칙과 플레이 방법을 물어보세요. Gemini 2.5 Flash가 안내해 드립니다.</p>
       </header>
+
+      <div class="chat-notice hidden" id="chat-notice"></div>
 
       <section class="chat-panel panel">
         <div class="chat-messages" id="chat-messages" aria-live="polite"></div>
