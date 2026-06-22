@@ -45,6 +45,7 @@ vercel dev
 ### ✊ 가위바위보 (`rps.html`)
 ### ⭕ 틱택토 (`ttt.html`)
 ### 🃏 기억력 카드 (`memory.html`)
+### 🔢 숫자 맞추기 (`guess.html`)
 ### 💬 게임 가이드 봇 (`chat.html`)
 
 챗봇은 Gemini 2.5 Flash를 사용하며, API 키는 Vercel 서버에만 저장됩니다.

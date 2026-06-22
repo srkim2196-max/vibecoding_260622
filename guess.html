@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>숫자 맞추기</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page-shell">
+    <nav class="site-nav">
+      <a href="index.html" class="site-logo">미니 게임</a>
+      <div class="site-nav-actions">
+        <a href="chat.html" class="nav-chat-link">💬 게임 가이드</a>
+        <a href="index.html" class="back-link">← 게임 목록</a>
+      </div>
+    </nav>
+
+    <main class="app app-guess">
+      <header class="header">
+        <h1>🔢 숫자 맞추기</h1>
+        <p class="subtitle">1부터 100까지 숨겨진 숫자를 맞춰보세요. UP / DOWN 힌트를 따라 최소 시도에 도전!</p>
+      </header>
+
+      <div class="stats-bar stats-bar-3">
+        <div class="stat">
+          <span class="stat-label">시도 횟수</span>
+          <span class="stat-value" id="guess-attempts">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">범위</span>
+          <span class="stat-value guess-range" id="guess-range">1 ~ 100</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">최고 기록</span>
+          <span class="stat-value stat-win" id="guess-best">-</span>
+        </div>
+      </div>
+
+      <section class="panel guess-panel">
+        <p class="guess-status" id="guess-status">숫자를 입력하고 확인을 눌러보세요!</p>
+        <p class="guess-hint" id="guess-hint"></p>
+
+        <form class="guess-form" id="guess-form">
+          <input
+            type="number"
+            id="guess-input"
+            class="guess-input"
+            min="1"
+            max="100"
+            placeholder="1 ~ 100"
+            required
+          >
+          <button type="submit" class="btn btn-primary">확인</button>
+        </form>
+      </section>
+
+      <div class="actions">
+        <button type="button" class="btn btn-secondary" id="guess-restart">새 게임</button>
+      </div>
+    </main>
+  </div>
+
+  <script src="guess.js"></script>
+</body>
+</html>

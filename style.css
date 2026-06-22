@@ -1023,3 +1023,78 @@ body {
     width: 100%;
   }
 }
+
+.app-guess {
+  max-width: 560px;
+}
+
+.guess-range {
+  font-size: clamp(22px, 4vw, 32px);
+}
+
+.guess-panel {
+  text-align: center;
+}
+
+.guess-status {
+  margin: 0 0 var(--spacing-sm);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.guess-status.status-win {
+  color: var(--semantic-success);
+}
+
+.guess-status.status-lose {
+  color: var(--semantic-error);
+}
+
+.guess-status.status-draw {
+  color: var(--link-blue);
+}
+
+.guess-hint {
+  margin: 0 0 var(--spacing-xl);
+  min-height: 24px;
+  color: var(--ink-mute);
+  font-size: 15px;
+}
+
+.guess-form {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: center;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.guess-input {
+  flex: 1;
+  padding: 12px 14px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--rounded-pill);
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+}
+
+.guess-input:focus {
+  border-color: var(--primary-tint);
+  box-shadow: var(--shadow-focus);
+}
+
+@media (max-width: 640px) {
+  .guess-form {
+    flex-direction: column;
+  }
+
+  .guess-form .btn-primary {
+    width: 100%;
+  }
+}
