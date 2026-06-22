@@ -1,0 +1,18 @@
+---
+description: Push project changes to the configured GitHub remote after substantive updates.
+globs:
+alwaysApply: true
+---
+
+# GitHub 동기화
+
+이 프로젝트의 원격 저장소:
+
+- `https://github.com/srkim2196-max/vibecoding_260622.git`
+- 브랜치: `main`
+
+코드 수정이 완료되면 사용자가 별도로 요청하지 않아도 커밋 후 `origin/main`에 push한다.
+
+- git config는 변경하지 않는다. 커밋 author는 환경 변수로 지정한다.
+- 커밋 메시지는 변경 내용을 간결하게 설명한다.
+- push 전 `git status`와 `git diff`로 변경 사항을 확인한다.
