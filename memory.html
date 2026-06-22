@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>기억력 카드</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page-shell">
+    <nav class="site-nav">
+      <a href="index.html" class="site-logo">미니 게임</a>
+      <a href="index.html" class="back-link">← 게임 목록</a>
+    </nav>
+
+    <main class="app app-memory">
+      <header class="header">
+        <h1>🃏 기억력 카드</h1>
+        <p class="subtitle">뒤집힌 카드에서 같은 그림을 찾아보세요. 최소 이동으로 모두 맞추면 최고!</p>
+      </header>
+
+      <div class="stats-bar stats-bar-3">
+        <div class="stat">
+          <span class="stat-label">이동 횟수</span>
+          <span class="stat-value" id="memory-moves">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">맞춘 쌍</span>
+          <span class="stat-value stat-win" id="memory-pairs">0 / 8</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">최고 기록</span>
+          <span class="stat-value" id="memory-best">-</span>
+        </div>
+      </div>
+
+      <section class="panel memory-panel">
+        <p class="memory-status" id="memory-status">카드를 눌러 같은 그림을 찾아보세요.</p>
+        <div class="memory-board" id="memory-board"></div>
+      </section>
+
+      <div class="actions">
+        <button type="button" class="btn btn-primary" id="memory-restart">새 게임</button>
+      </div>
+    </main>
+  </div>
+
+  <script src="memory.js"></script>
+</body>
+</html>

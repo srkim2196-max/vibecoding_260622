@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>가위바위보</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page-shell">
+    <nav class="site-nav">
+      <a href="index.html" class="site-logo">미니 게임</a>
+      <a href="index.html" class="back-link">← 게임 목록</a>
+    </nav>
+
+    <main class="app app-rps">
+      <header class="header">
+        <h1>✊ 가위바위보</h1>
+        <p class="subtitle">컴퓨터와 대결! 아래에서 하나를 골라 승부를 내 보세요.</p>
+      </header>
+
+      <div class="stats-bar stats-bar-4">
+        <div class="stat">
+          <span class="stat-label">승</span>
+          <span class="stat-value stat-win" id="win-count">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">패</span>
+          <span class="stat-value stat-lose" id="lose-count">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">무</span>
+          <span class="stat-value" id="draw-count">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">연승</span>
+          <span class="stat-value stat-streak" id="streak-count">0</span>
+        </div>
+      </div>
+
+      <section class="rps-arena panel">
+        <div class="rps-battle">
+          <div class="rps-side">
+            <span class="rps-side-label">나</span>
+            <span class="rps-emoji" id="player-emoji">❔</span>
+          </div>
+          <span class="rps-vs">VS</span>
+          <div class="rps-side">
+            <span class="rps-side-label">컴퓨터</span>
+            <span class="rps-emoji" id="cpu-emoji">❔</span>
+          </div>
+        </div>
+        <p class="rps-result" id="rps-result">가위, 바위, 보 중 하나를 선택하세요!</p>
+      </section>
+
+      <div class="rps-choices">
+        <button type="button" class="rps-choice" data-choice="scissors">
+          <span class="rps-choice-emoji">✌️</span>
+          <span>가위</span>
+        </button>
+        <button type="button" class="rps-choice" data-choice="rock">
+          <span class="rps-choice-emoji">✊</span>
+          <span>바위</span>
+        </button>
+        <button type="button" class="rps-choice" data-choice="paper">
+          <span class="rps-choice-emoji">✋</span>
+          <span>보</span>
+        </button>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn btn-secondary" id="reset-score">점수 초기화</button>
+      </div>
+    </main>
+  </div>
+
+  <script src="rps.js"></script>
+</body>
+</html>

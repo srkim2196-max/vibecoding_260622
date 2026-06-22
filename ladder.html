@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>사다리 타기</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page-shell">
+    <nav class="site-nav">
+      <a href="index.html" class="site-logo">미니 게임</a>
+      <a href="index.html" class="back-link">← 게임 목록</a>
+    </nav>
+
+    <main class="app">
+      <header class="header">
+        <h1>🪜 사다리 타기</h1>
+        <p class="subtitle">참가자와 결과를 입력하고, 사다리를 생성한 뒤 시작할 사람을 선택하세요.</p>
+      </header>
+
+      <section class="setup">
+        <div class="panel">
+          <h2>참가자</h2>
+          <div id="participants-list" class="input-list"></div>
+          <button type="button" class="btn btn-ghost" id="add-participant">+ 참가자 추가</button>
+        </div>
+
+        <div class="panel">
+          <h2>결과</h2>
+          <div id="results-list" class="input-list"></div>
+          <button type="button" class="btn btn-ghost" id="add-result">+ 결과 추가</button>
+        </div>
+      </section>
+
+      <div class="actions">
+        <button type="button" class="btn btn-primary" id="generate-btn">사다리 생성</button>
+        <button type="button" class="btn btn-secondary" id="reset-btn">초기화</button>
+      </div>
+
+      <section class="game-area hidden" id="game-area">
+        <div class="game-header">
+          <h2>사다리</h2>
+          <p class="hint">위쪽 참가자를 클릭하면 경로가 따라 내려갑니다.</p>
+        </div>
+        <div class="canvas-wrap">
+          <canvas id="ladder-canvas"></canvas>
+        </div>
+        <div id="result-banner" class="result-banner hidden"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

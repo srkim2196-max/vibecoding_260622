@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>틱택토</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page-shell">
+    <nav class="site-nav">
+      <a href="index.html" class="site-logo">미니 게임</a>
+      <a href="index.html" class="back-link">← 게임 목록</a>
+    </nav>
+
+    <main class="app app-ttt">
+      <header class="header">
+        <h1>⭕ 틱택토</h1>
+        <p class="subtitle">3×3 보드에서 컴퓨터와 대결하세요. 먼저 가로·세로·대각선을 완성하면 승리!</p>
+      </header>
+
+      <div class="stats-bar stats-bar-3">
+        <div class="stat">
+          <span class="stat-label">승</span>
+          <span class="stat-value stat-win" id="ttt-wins">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">패</span>
+          <span class="stat-value stat-lose" id="ttt-losses">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">무</span>
+          <span class="stat-value" id="ttt-draws">0</span>
+        </div>
+      </div>
+
+      <section class="panel ttt-panel">
+        <p class="ttt-status" id="ttt-status">당신은 X · 컴퓨터는 O · 먼저 두세요!</p>
+        <div class="ttt-board" id="ttt-board" role="grid" aria-label="틱택토 보드"></div>
+      </section>
+
+      <div class="actions">
+        <button type="button" class="btn btn-primary" id="ttt-restart">다시 하기</button>
+        <button type="button" class="btn btn-secondary" id="ttt-reset-score">점수 초기화</button>
+      </div>
+    </main>
+  </div>
+
+  <script src="ttt.js"></script>
+</body>
+</html>
