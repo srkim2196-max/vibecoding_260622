@@ -52,6 +52,11 @@ function finishGame() {
 
   setStatus(`정답! 🎉 ${answer}입니다. ${attempts}번 만에 맞췄어요!`, "win");
   hintEl.textContent = "새 게임으로 다시 도전해 보세요.";
+  if (window.MiniGameStats) {
+    MiniGameStats.record("guess", { attempts });
+    const saved = MiniGameStats.getGameStats("guess");
+    bestAttempts = saved?.bestAttempts ?? bestAttempts;
+  }
   updateStats();
 }
 
@@ -91,5 +96,10 @@ formEl.addEventListener("submit", (event) => {
 });
 
 restartBtn.addEventListener("click", startGame);
+
+if (window.MiniGameStats) {
+  const saved = MiniGameStats.getGameStats("guess");
+  if (saved?.bestAttempts != null) bestAttempts = saved.bestAttempts;
+}
 
 startGame();

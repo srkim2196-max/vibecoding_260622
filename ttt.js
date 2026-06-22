@@ -115,6 +115,9 @@ function finishRound(winner) {
     statusEl.className = "ttt-status status-draw";
   }
   updateScoreboard();
+  if (window.MiniGameStats) {
+    MiniGameStats.record("ttt", { wins, losses, draws });
+  }
   renderBoard();
 }
 
@@ -163,6 +166,9 @@ function resetScore() {
   draws = 0;
   updateScoreboard();
   resetRound();
+  if (window.MiniGameStats) {
+    MiniGameStats.record("ttt", { wins: 0, losses: 0, draws: 0 });
+  }
 }
 
 boardEl.addEventListener("click", (event) => {
@@ -173,6 +179,15 @@ boardEl.addEventListener("click", (event) => {
 
 restartBtn.addEventListener("click", resetRound);
 resetScoreBtn.addEventListener("click", resetScore);
+
+if (window.MiniGameStats) {
+  const saved = MiniGameStats.getGameStats("ttt");
+  if (saved) {
+    wins = saved.wins || 0;
+    losses = saved.losses || 0;
+    draws = saved.draws || 0;
+  }
+}
 
 updateScoreboard();
 resetRound();

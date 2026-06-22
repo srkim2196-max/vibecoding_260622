@@ -66,6 +66,11 @@ function checkWin() {
   if (bestMoves === null || moves < bestMoves) {
     bestMoves = moves;
   }
+  if (window.MiniGameStats) {
+    MiniGameStats.record("memory", { moves });
+    const saved = MiniGameStats.getGameStats("memory");
+    bestMoves = saved?.bestMoves ?? bestMoves;
+  }
   updateStats();
 }
 
@@ -131,4 +136,10 @@ boardEl.addEventListener("click", (event) => {
 });
 
 restartBtn.addEventListener("click", startGame);
+
+if (window.MiniGameStats) {
+  const saved = MiniGameStats.getGameStats("memory");
+  if (saved?.bestMoves != null) bestMoves = saved.bestMoves;
+}
+
 startGame();

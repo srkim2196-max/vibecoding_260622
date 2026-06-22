@@ -329,6 +329,12 @@ function generateLadder() {
   gameArea.classList.remove("hidden");
   resultBanner.classList.add("hidden");
   animating = false;
+
+  if (window.MiniGameStats) {
+    const saved = MiniGameStats.getGameStats("ladder");
+    const runs = (saved?.runs || 0) + 1;
+    MiniGameStats.record("ladder", { runs });
+  }
 }
 
 function resetAll() {

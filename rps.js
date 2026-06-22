@@ -115,6 +115,9 @@ function playRound(playerChoice) {
   }
 
   updateScoreboard();
+  if (window.MiniGameStats) {
+    MiniGameStats.record("rps", { wins, losses, draws, currentStreak: streak });
+  }
   animateReveal(playerChoice, cpuChoice, outcome);
 }
 
@@ -130,6 +133,9 @@ function resetScore() {
   cpuEmoji.textContent = "❔";
   resultEl.className = "rps-result";
   resultEl.textContent = "가위, 바위, 보 중 하나를 선택하세요!";
+  if (window.MiniGameStats) {
+    MiniGameStats.record("rps", { wins: 0, losses: 0, draws: 0, currentStreak: 0 });
+  }
 }
 
 choiceButtons.forEach((button) => {
@@ -139,4 +145,15 @@ choiceButtons.forEach((button) => {
 });
 
 resetBtn.addEventListener("click", resetScore);
+
+if (window.MiniGameStats) {
+  const saved = MiniGameStats.getGameStats("rps");
+  if (saved) {
+    wins = saved.wins || 0;
+    losses = saved.losses || 0;
+    draws = saved.draws || 0;
+    streak = saved.currentStreak || 0;
+  }
+}
+
 updateScoreboard();

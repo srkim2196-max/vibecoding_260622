@@ -89,6 +89,9 @@ function showResult(ms) {
   if (bestTime === null || ms < bestTime) {
     bestTime = ms;
   }
+  if (window.MiniGameStats) {
+    MiniGameStats.record("reaction", { lastMs: ms, bestMs: bestTime, attempts: attemptCount });
+  }
   updateStats();
 
   setState(STATES.RESULT);
@@ -125,4 +128,13 @@ function handleClick() {
 }
 
 pad.addEventListener("click", handleClick);
+
+if (window.MiniGameStats) {
+  const saved = MiniGameStats.getGameStats("reaction");
+  if (saved) {
+    bestTime = saved.bestMs;
+    attemptCount = saved.attempts || 0;
+  }
+}
+
 updateStats();

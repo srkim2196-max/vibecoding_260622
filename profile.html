@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>내 프로필</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page-shell">
+    <nav class="site-nav">
+      <a href="index.html" class="site-logo">미니 게임</a>
+      <div class="site-nav-actions">
+        <a href="chat.html" class="nav-chat-link">💬 게임 가이드</a>
+        <a href="index.html" class="back-link">← 게임 목록</a>
+      </div>
+    </nav>
+
+    <main class="app app-profile">
+      <header class="header">
+        <h1>🏆 내 프로필</h1>
+        <p class="subtitle">게임 기록과 오늘의 챌린지, 배지를 한곳에서 확인하세요.</p>
+      </header>
+
+      <section class="panel profile-card">
+        <form class="profile-name-form" id="profile-form">
+          <label class="profile-label" for="profile-nickname">닉네임</label>
+          <div class="profile-name-row">
+            <input type="text" id="profile-nickname" class="profile-input" maxlength="12" placeholder="닉네임">
+            <button type="submit" class="btn btn-primary">저장</button>
+          </div>
+        </form>
+        <p class="profile-greeting" id="profile-greeting"></p>
+      </section>
+
+      <section class="panel challenge-card" id="challenge-card">
+        <span class="challenge-eyebrow">오늘의 챌린지</span>
+        <h2 class="challenge-title" id="challenge-title"></h2>
+        <p class="challenge-desc" id="challenge-desc"></p>
+        <p class="challenge-status" id="challenge-status"></p>
+        <a href="#" class="btn btn-primary challenge-link" id="challenge-link">도전하러 가기</a>
+      </section>
+
+      <section class="profile-section">
+        <h2 class="profile-section-title">게임 기록</h2>
+        <div class="record-grid" id="record-grid"></div>
+      </section>
+
+      <section class="profile-section">
+        <h2 class="profile-section-title">배지</h2>
+        <div class="badge-grid" id="badge-grid"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="stats-store.js"></script>
+  <script src="profile.js"></script>
+</body>
+</html>
