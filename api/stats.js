@@ -32,6 +32,9 @@ function buildRecordRow(playerId, gameId, patch) {
   if (gameId === "ladder" && patch.runs != null) {
     return { player_id: playerId, game_id: gameId, event_type: "run", value: patch.runs, meta: {} };
   }
+  if (gameId === "bird" && patch.score != null) {
+    return { player_id: playerId, game_id: gameId, event_type: patch.cleared ? "clear" : "score", value: patch.score, meta: { bestScore: patch.bestScore } };
+  }
   return null;
 }
 

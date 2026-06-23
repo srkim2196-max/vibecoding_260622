@@ -1333,3 +1333,37 @@ body {
     flex-direction: column;
   }
 }
+
+.app-bird {
+  max-width: 860px;
+}
+
+.bird-panel {
+  text-align: center;
+}
+
+.bird-status {
+  margin: 0 0 var(--spacing-md);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink-mute);
+}
+
+.bird-status.status-win {
+  color: var(--semantic-success);
+}
+
+.bird-status.status-lose {
+  color: var(--semantic-error);
+}
+
+.bird-canvas-wrap {
+  cursor: crosshair;
+  user-select: none;
+  touch-action: none;
+}
+
+#bird-canvas {
+  display: block;
+  width: 100%;
+}

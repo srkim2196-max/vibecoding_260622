@@ -57,6 +57,15 @@
       desc: "사다리를 생성해 추첨을 진행하세요.",
       check: (s) => s.games.ladder.runs >= 1,
     },
+    {
+      id: "bird-clear",
+      game: "bird",
+      href: "bird.html",
+      icon: "🐦",
+      title: "새총 슈팅 클리어",
+      desc: "모든 돼지를 제거해 스테이지를 클리어하세요.",
+      check: (s) => s.games.bird.clears >= 1,
+    },
   ];
 
   const BADGES = [
@@ -68,7 +77,8 @@
     { id: "ttt-champ", icon: "⭕", name: "틱택토 챔프", desc: "틱택토 3승", check: (s) => s.games.ttt.wins >= 3 },
     { id: "party-host", icon: "🪜", name: "파티 호스트", desc: "사다리 타기 3회", check: (s) => s.games.ladder.runs >= 3 },
     { id: "challenger", icon: "🏆", name: "챌린저", desc: "오늘의 챌린지 3회 클리어", check: (s) => s.challengeTotal >= 3 },
-    { id: "collector", icon: "🌟", name: "올라운더", desc: "6개 게임 모두 플레이", check: (s) => Object.values(s.gamesPlayed).filter(Boolean).length >= 6 },
+    { id: "collector", icon: "🌟", name: "올라운더", desc: "7개 게임 모두 플레이", check: (s) => Object.values(s.gamesPlayed).filter(Boolean).length >= 7 },
+    { id: "bird-hunter", icon: "🐦", name: "새 사냥꾼", desc: "새총 슈팅 1500점 이상", check: (s) => s.games.bird.bestScore >= 1500 },
   ];
 
   let syncStatus = "idle";
@@ -86,6 +96,7 @@
         rps: { wins: 0, losses: 0, draws: 0, bestStreak: 0, currentStreak: 0 },
         ttt: { wins: 0, losses: 0, draws: 0 },
         ladder: { runs: 0 },
+        bird: { bestScore: 0, clears: 0 },
       },
       gamesPlayed: {
         reaction: false,
@@ -94,6 +105,7 @@
         rps: false,
         ttt: false,
         ladder: false,
+        bird: false,
       },
       challenge: { date: "", id: "", completed: false },
       challengeTotal: 0,
@@ -149,6 +161,7 @@
         rps: { ...base.games.rps, ...raw.games?.rps },
         ttt: { ...base.games.ttt, ...raw.games?.ttt },
         ladder: { ...base.games.ladder, ...raw.games?.ladder },
+        bird: { ...base.games.bird, ...raw.games?.bird },
       },
       gamesPlayed: { ...base.gamesPlayed, ...raw.gamesPlayed },
       challenge: { ...base.challenge, ...raw.challenge },
@@ -206,6 +219,9 @@
     merged.games.ttt.draws = maxNum(local.games.ttt.draws, cloud.games.ttt.draws);
 
     merged.games.ladder.runs = maxNum(local.games.ladder.runs, cloud.games.ladder.runs);
+
+    merged.games.bird.bestScore = maxNum(local.games.bird.bestScore, cloud.games.bird.bestScore);
+    merged.games.bird.clears = maxNum(local.games.bird.clears, cloud.games.bird.clears);
 
     Object.keys(merged.gamesPlayed).forEach((key) => {
       merged.gamesPlayed[key] = Boolean(local.gamesPlayed[key] || cloud.gamesPlayed[key]);
@@ -334,6 +350,15 @@
 
     if (gameId === "ladder" && patch.runs != null) {
       game.runs = patch.runs;
+    }
+
+    if (gameId === "bird") {
+      if (patch.bestScore != null) {
+        game.bestScore = Math.max(game.bestScore || 0, patch.bestScore);
+      }
+      if (patch.cleared) {
+        game.clears = (game.clears || 0) + 1;
+      }
     }
 
     state = tryCompleteChallenge(state);

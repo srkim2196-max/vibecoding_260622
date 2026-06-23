@@ -20,6 +20,7 @@ const RECORDS = [
   { id: "rps", icon: "✊", name: "가위바위보", format: (g) => `${g.wins}승 · 최고 ${g.bestStreak || 0}연승` },
   { id: "ttt", icon: "⭕", name: "틱택토", format: (g) => `${g.wins}승 ${g.losses}패 ${g.draws}무` },
   { id: "ladder", icon: "🪜", name: "사다리 타기", format: (g) => `${g.runs || 0}회 진행` },
+  { id: "bird", icon: "🐦", name: "새총 슈팅", format: (g) => (g.bestScore ? `최고 ${g.bestScore}점 · ${g.clears || 0}회 클리어` : "기록 없음") },
 ];
 
 const GAME_NAMES = {
@@ -29,6 +30,7 @@ const GAME_NAMES = {
   rps: "가위바위보",
   ttt: "틱택토",
   ladder: "사다리 타기",
+  bird: "새총 슈팅",
 };
 
 function formatSyncStatus(status) {

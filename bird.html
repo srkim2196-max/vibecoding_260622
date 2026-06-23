@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>새총 슈팅</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page-shell">
+    <nav class="site-nav">
+      <a href="index.html" class="site-logo">미니 게임</a>
+      <div class="site-nav-actions">
+        <a href="profile.html" class="nav-chat-link">🏆 내 프로필</a>
+        <a href="chat.html" class="nav-chat-link">💬 게임 가이드</a>
+        <a href="index.html" class="back-link">← 게임 목록</a>
+      </div>
+    </nav>
+
+    <main class="app app-bird">
+      <header class="header">
+        <h1>🐦 새총 슈팅</h1>
+        <p class="subtitle">새를 당겨 날려 돼지와 블록을 무너뜨리세요! 앵그리 버드 스타일의 슬링샷 게임입니다.</p>
+      </header>
+
+      <div class="stats-bar stats-bar-3">
+        <div class="stat">
+          <span class="stat-label">점수</span>
+          <span class="stat-value" id="bird-score">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">남은 새</span>
+          <span class="stat-value stat-win" id="bird-left">3</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">최고 점수</span>
+          <span class="stat-value" id="bird-best">0</span>
+        </div>
+      </div>
+
+      <section class="panel bird-panel">
+        <p class="bird-status" id="bird-status">새를 드래그해 당긴 뒤, 놓으면 발사됩니다!</p>
+        <div class="canvas-wrap bird-canvas-wrap">
+          <canvas id="bird-canvas"></canvas>
+        </div>
+      </section>
+
+      <div class="actions">
+        <button type="button" class="btn btn-primary" id="bird-restart">다시 시작</button>
+      </div>
+    </main>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="stats-store.js"></script>
+  <script src="bird.js"></script>
+</body>
+</html>
