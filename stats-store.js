@@ -107,7 +107,7 @@
     if (window.APP_CONFIG?.statsApiUrl) return window.APP_CONFIG.statsApiUrl;
     const hostname = window.location.hostname;
     if (hostname.includes("vercel.app") || hostname === "localhost") return "/api/stats";
-    return "https://vibecoding-260622.vercel.app/api/stats";
+    return "https://vibe-260622.vercel.app/api/stats";
   }
 
   async function readError(response) {
