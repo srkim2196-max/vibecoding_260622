@@ -6,10 +6,10 @@ const bestEl = document.getElementById("bird-best");
 const statusEl = document.getElementById("bird-status");
 const restartBtn = document.getElementById("bird-restart");
 
-const GRAVITY = 0.38;
-const GROUND_Y = 0.82;
-const SLING = { x: 0.18, y: 0.72 };
-const MAX_PULL = 90;
+const GRAVITY = 0.28;
+const SLING = { x: 0.14, y: 0.62 };
+const MAX_PULL = 100;
+const LAUNCH_POWER = 0.22;
 const BIRD_R = 16;
 const MAX_BIRDS = 3;
 
@@ -23,34 +23,35 @@ let dragging = false;
 let birdsLeft = MAX_BIRDS;
 let score = 0;
 let bestScore = 0;
-let phase = "aim"; // aim | fly | wait | win | lose
+let phase = "aim";
 let settleTimer = 0;
+let flyTimer = 0;
 
 function groundY() {
-  return height * GROUND_Y;
+  return height * 0.88;
 }
 
 function slingPos() {
-  return { x: width * SLING.x, y: groundY() - 20 };
+  return { x: width * SLING.x, y: height * SLING.y };
 }
 
 function createLevel() {
-  const baseX = width * 0.55;
+  const baseX = width * 0.48;
   const g = groundY();
 
   blocks = [
-    { x: baseX, y: g - 40, w: 120, h: 20, hp: 2, alive: true },
-    { x: baseX + 30, y: g - 80, w: 60, h: 20, hp: 2, alive: true },
-    { x: baseX + 90, y: g - 80, w: 60, h: 20, hp: 2, alive: true },
-    { x: baseX + 30, y: g - 120, w: 120, h: 20, hp: 2, alive: true },
-    { x: baseX + 200, y: g - 40, w: 20, h: 80, hp: 2, alive: true },
-    { x: baseX + 160, y: g - 100, w: 100, h: 20, hp: 2, alive: true },
+    { x: baseX, y: g, w: 110, h: 22, hp: 2, alive: true },
+    { x: baseX + 25, y: g - 70, w: 55, h: 22, hp: 2, alive: true },
+    { x: baseX + 85, y: g - 70, w: 55, h: 22, hp: 2, alive: true },
+    { x: baseX + 25, y: g - 115, w: 115, h: 22, hp: 2, alive: true },
+    { x: baseX + 175, y: g, w: 22, h: 75, hp: 2, alive: true },
+    { x: baseX + 140, y: g - 95, w: 90, h: 22, hp: 2, alive: true },
   ];
 
   pigs = [
-    { x: baseX + 60, y: g - 145, r: 18, alive: true },
-    { x: baseX + 180, y: g - 130, r: 18, alive: true },
-    { x: baseX + 210, y: g - 55, r: 16, alive: true },
+    { x: baseX + 55, y: g - 138, r: 18, alive: true },
+    { x: baseX + 165, y: g - 125, r: 18, alive: true },
+    { x: baseX + 186, y: g - 52, r: 16, alive: true },
   ];
 }
 
@@ -59,6 +60,7 @@ function resetBirdOnSling() {
   bird = { x: s.x, y: s.y, vx: 0, vy: 0, r: BIRD_R, flying: false, alive: true };
   slingPull = { x: s.x, y: s.y };
   dragging = false;
+  flyTimer = 0;
   phase = birdsLeft > 0 ? "aim" : "lose";
 }
 
@@ -76,7 +78,7 @@ function setStatus(text, type = "") {
 function resize() {
   const wrap = canvas.parentElement;
   width = Math.min(820, wrap.clientWidth - 2);
-  height = Math.max(360, Math.min(480, width * 0.55));
+  height = Math.max(380, Math.min(520, width * 0.58));
   const dpr = window.devicePixelRatio || 1;
   canvas.width = width * dpr;
   canvas.height = height * dpr;
@@ -111,7 +113,7 @@ function circleCircleHit(x1, y1, r1, x2, y2, r2) {
 
 function hitBlock(block, force) {
   if (!block.alive) return;
-  block.hp -= force > 8 ? 2 : 1;
+  block.hp -= force > 5 ? 2 : 1;
   score += 50;
   if (block.hp <= 0) {
     block.alive = false;
@@ -121,7 +123,7 @@ function hitBlock(block, force) {
 
 function hitPig(pig, force) {
   if (!pig.alive) return;
-  if (force > 4) {
+  if (force > 2.5) {
     pig.alive = false;
     score += 500;
   }
@@ -140,29 +142,36 @@ function saveScore(cleared = false) {
 }
 
 function checkEnd() {
-  if (alivePigs() === 0) {
+  if (alivePigs() === 0 && phase !== "win") {
     phase = "win";
+    bird.flying = false;
     saveScore(true);
     setStatus("클리어! 🎉 모든 돼지를 처리했습니다!", "win");
     return;
   }
-  if (birdsLeft <= 0 && phase !== "fly" && phase !== "wait") {
+  if (birdsLeft <= 0 && phase !== "fly" && phase !== "wait" && phase !== "win") {
     phase = "lose";
     saveScore(false);
     setStatus("아쉽네요… 😅 다시 도전해 보세요!", "lose");
   }
 }
 
+function beginWait() {
+  bird.flying = false;
+  phase = "wait";
+  settleTimer = 45;
+}
+
 function launchBird() {
   const s = slingPos();
   const dx = s.x - slingPull.x;
   const dy = s.y - slingPull.y;
-  const power = 0.12;
-  bird.vx = dx * power;
-  bird.vy = dy * power;
+  bird.vx = dx * LAUNCH_POWER;
+  bird.vy = dy * LAUNCH_POWER;
   bird.flying = true;
   birdsLeft -= 1;
   phase = "fly";
+  flyTimer = 0;
   updateHud();
   setStatus("날아간다! 🐦");
 }
@@ -176,44 +185,38 @@ function afterBirdSettled() {
     resetBirdOnSling();
     setStatus("다음 새! 드래그해서 발사하세요.");
   } else {
-    phase = "lose";
     checkEnd();
   }
 }
 
-function updatePhysics() {
-  if (!bird?.flying) return;
-
+function updateFlyingBird() {
   bird.vy += GRAVITY;
   bird.x += bird.vx;
   bird.y += bird.vy;
+  flyTimer += 1;
 
   const speed = Math.hypot(bird.vx, bird.vy);
   const g = groundY();
 
   if (bird.y + bird.r >= g) {
     bird.y = g - bird.r;
-    bird.vy *= -0.35;
-    bird.vx *= 0.75;
-    if (Math.abs(bird.vy) < 1 && Math.abs(bird.vx) < 0.5) {
-      bird.flying = false;
-      phase = "wait";
-      settleTimer = 40;
+    bird.vy *= -0.4;
+    bird.vx *= 0.78;
+    if (Math.abs(bird.vy) < 1.2 && Math.abs(bird.vx) < 0.8) {
+      beginWait();
     }
   }
 
-  if (bird.x > width + 50 || bird.x < -50) {
-    bird.flying = false;
-    phase = "wait";
-    settleTimer = 20;
+  if (bird.x > width + 40 || bird.x < -40 || flyTimer > 480) {
+    beginWait();
   }
 
   blocks.forEach((block) => {
     if (!block.alive) return;
     if (circleRectHit(bird.x, bird.y, bird.r, block.x, block.y - block.h, block.w, block.h)) {
       hitBlock(block, speed);
-      bird.vx *= -0.5;
-      bird.vy *= -0.4;
+      bird.vx *= -0.45;
+      bird.vy *= -0.35;
     }
   });
 
@@ -221,18 +224,26 @@ function updatePhysics() {
     if (!pig.alive) return;
     if (circleCircleHit(bird.x, bird.y, bird.r, pig.x, pig.y, pig.r)) {
       hitPig(pig, speed);
-      bird.vx *= -0.6;
-      bird.vy *= -0.5;
+      bird.vx *= -0.5;
+      bird.vy *= -0.4;
     }
   });
 
-  if (phase === "wait") {
-    settleTimer -= 1;
-    if (settleTimer <= 0) afterBirdSettled();
-  }
-
   updateHud();
   checkEnd();
+}
+
+function updatePhysics() {
+  if (bird?.flying) {
+    updateFlyingBird();
+  }
+
+  if (phase === "wait") {
+    settleTimer -= 1;
+    if (settleTimer <= 0) {
+      afterBirdSettled();
+    }
+  }
 }
 
 function drawBackground() {
@@ -251,23 +262,24 @@ function drawBackground() {
 
 function drawSlingshot() {
   const s = slingPos();
+  const g = groundY();
   ctx.strokeStyle = "#5d4037";
   ctx.lineWidth = 6;
   ctx.lineCap = "round";
 
   ctx.beginPath();
-  ctx.moveTo(s.x - 20, groundY());
-  ctx.lineTo(s.x, s.y - 30);
-  ctx.lineTo(s.x + 20, groundY());
+  ctx.moveTo(s.x - 18, g);
+  ctx.lineTo(s.x, s.y + 10);
+  ctx.lineTo(s.x + 18, g);
   ctx.stroke();
 
   if (phase === "aim" && slingPull) {
     ctx.strokeStyle = "#4a154b";
     ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.moveTo(s.x - 15, s.y - 10);
+    ctx.moveTo(s.x - 12, s.y);
     ctx.lineTo(slingPull.x, slingPull.y);
-    ctx.lineTo(s.x + 15, s.y - 10);
+    ctx.lineTo(s.x + 12, s.y);
     ctx.stroke();
   }
 }
@@ -332,7 +344,9 @@ function draw() {
   drawBlocks();
   drawPigs();
   drawSlingshot();
-  if (phase === "aim" || bird?.flying) drawBird(bird);
+  if (bird && (phase === "aim" || phase === "fly" || phase === "wait")) {
+    drawBird(bird);
+  }
 }
 
 function loop() {
@@ -354,7 +368,7 @@ function pointerPos(event) {
 function onDown(event) {
   if (phase !== "aim" || !bird) return;
   const p = pointerPos(event);
-  if (dist(p.x, p.y, bird.x, bird.y) < bird.r + 20) {
+  if (dist(p.x, p.y, bird.x, bird.y) < bird.r + 24) {
     dragging = true;
     event.preventDefault();
   }
@@ -373,7 +387,7 @@ function onUp() {
   if (!dragging || phase !== "aim") return;
   dragging = false;
   const s = slingPos();
-  if (dist(slingPull.x, slingPull.y, s.x, s.y) > 12) {
+  if (dist(slingPull.x, slingPull.y, s.x, s.y) > 15) {
     launchBird();
   } else {
     bird.x = s.x;
@@ -389,7 +403,7 @@ function startGame() {
   createLevel();
   resetBirdOnSling();
   updateHud();
-  setStatus("새를 드래그해 당긴 뒤, 놓으면 발사됩니다!");
+  setStatus("새를 뒤로 당겼다가 놓으면 발사됩니다! (왼쪽·아래로 당기세요)");
 }
 
 canvas.addEventListener("mousedown", onDown);
