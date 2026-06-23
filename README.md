@@ -2,50 +2,44 @@
 
 브라우저에서 바로 즐길 수 있는 간단한 웹 게임 모음입니다.
 
-## 배포 안내 (중요)
+## 배포 안내
 
-| 방식 | 게임 | 챗봇 |
-|------|------|------|
-| GitHub Pages | ✅ | Vercel API 연동 필요 |
-| Vercel | ✅ | ✅ (API 키 설정 시) |
+| 방식 | 게임 | 챗봇 | 기록 저장 |
+|------|------|------|-----------|
+| GitHub Pages | ✅ | Vercel API | Supabase (Vercel API) |
+| Vercel | ✅ | ✅ | ✅ |
 
-### GitHub Pages
+### Vercel 환경 변수
 
-1. GitHub 저장소 → **Settings → Pages**
-2. **Source**를 **GitHub Actions**로 선택
-3. `main` 브랜치 push 시 자동 배포
-4. 주소: `https://srkim2196-max.github.io/vibecoding_260622/`
+| 이름 | 설명 |
+|------|------|
+| `GEMINI_API_KEY` | Google AI Studio API 키 |
+| `SUPABASE_URL` | Supabase 프로젝트 URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role 키 (서버 전용) |
 
-> GitHub Pages는 정적 파일만 제공합니다. 챗봇 API는 Vercel에서 실행됩니다.
+### Supabase 설정
 
-### Vercel (챗봇 API)
+1. [Supabase](https://supabase.com)에서 프로젝트 생성
+2. **SQL Editor**에서 `supabase/schema.sql` 실행
+3. **Settings → API**에서 URL과 `service_role` 키 복사
+4. Vercel 환경 변수에 추가 후 **Redeploy**
 
-1. [Vercel](https://vercel.com)에서 GitHub 저장소 연결
-2. **Settings → Environment Variables** → `GEMINI_API_KEY` 추가
-3. **Deployments → Redeploy** (환경 변수 추가 후 필수!)
-4. 주소: `https://vibecoding-260622.vercel.app`
-
-GitHub Pages에서 챗봇을 쓰려면 Vercel에 `GEMINI_API_KEY`가 설정되어 있어야 합니다.
+게임 기록은 `players`(통합 통계)와 `game_records`(플레이 이력) 테이블에 저장됩니다.
 
 ## 실행 방법
 
 ```bash
-# 게임만 (로컬)
-npx serve .
-
-# 게임 + 챗봇 (로컬)
-npm i -g vercel
-vercel dev
+npm install
+npx serve .          # 게임만
+vercel dev           # API + Supabase 연동 테스트
 ```
+
+## 주요 페이지
+
+- `index.html` — 게임 목록
+- `profile.html` — 기록 · 챌린지 · 배지 (Supabase 동기화)
+- `chat.html` — AI 게임 가이드
 
 ## 게임 목록
 
-### 🪜 사다리 타기 (`ladder.html`)
-### ⚡ 반응속도 테스트 (`reaction.html`)
-### ✊ 가위바위보 (`rps.html`)
-### ⭕ 틱택토 (`ttt.html`)
-### 🃏 기억력 카드 (`memory.html`)
-### 🔢 숫자 맞추기 (`guess.html`)
-### 💬 게임 가이드 봇 (`chat.html`)
-
-챗봇은 Gemini 2.5 Flash를 사용하며, API 키는 Vercel 서버에만 저장됩니다.
+🪜 사다리 · ⚡ 반응속도 · ✊ 가위바위보 · ⭕ 틱택토 · 🃏 기억력 · 🔢 숫자 맞추기 · 💬 가이드 봇 · 🏆 프로필

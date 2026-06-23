@@ -31,6 +31,7 @@
           </div>
         </form>
         <p class="profile-greeting" id="profile-greeting"></p>
+        <p class="sync-status" id="sync-status">기록 불러오는 중…</p>
       </section>
 
       <section class="panel challenge-card" id="challenge-card">
@@ -47,12 +48,18 @@
       </section>
 
       <section class="profile-section">
+        <h2 class="profile-section-title">최근 플레이 (Supabase)</h2>
+        <ul class="recent-records" id="recent-records"></ul>
+      </section>
+
+      <section class="profile-section">
         <h2 class="profile-section-title">배지</h2>
         <div class="badge-grid" id="badge-grid"></div>
       </section>
     </main>
   </div>
 
+  <script src="config.js"></script>
   <script src="stats-store.js"></script>
   <script src="profile.js"></script>
 </body>

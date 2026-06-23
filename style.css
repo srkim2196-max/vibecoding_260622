@@ -1141,6 +1141,35 @@ body {
   font-size: 15px;
 }
 
+.sync-status {
+  margin: var(--spacing-sm) 0 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sync-synced {
+  color: var(--semantic-success);
+}
+
+.sync-syncing {
+  color: var(--link-blue);
+}
+
+.sync-offline {
+  color: var(--semantic-error);
+}
+
+.recent-records {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--ink-mute);
+  line-height: 1.7;
+}
+
+.recent-records li {
+  margin-bottom: var(--spacing-sm);
+}
+
 .challenge-card {
   margin-bottom: var(--spacing-xl);
   text-align: center;

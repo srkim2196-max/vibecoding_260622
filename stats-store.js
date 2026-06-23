@@ -1,5 +1,6 @@
 (function () {
   const STORAGE_KEY = "mini-game-hub-v1";
+  const PLAYER_ID_KEY = "mini-game-player-id";
 
   const CHALLENGE_POOL = [
     {
@@ -70,6 +71,10 @@
     { id: "collector", icon: "🌟", name: "올라운더", desc: "6개 게임 모두 플레이", check: (s) => Object.values(s.gamesPlayed).filter(Boolean).length >= 6 },
   ];
 
+  let syncStatus = "idle";
+  let recentRecords = [];
+  let hydratePromise = null;
+
   function defaultState() {
     return {
       profile: { nickname: "플레이어" },
@@ -95,6 +100,22 @@
     };
   }
 
+  function getStatsApiUrl() {
+    if (window.APP_CONFIG?.statsApiUrl) return window.APP_CONFIG.statsApiUrl;
+    const hostname = window.location.hostname;
+    if (hostname.includes("vercel.app") || hostname === "localhost") return "/api/stats";
+    return "https://vibecoding-260622.vercel.app/api/stats";
+  }
+
+  function getPlayerId() {
+    let id = localStorage.getItem(PLAYER_ID_KEY);
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem(PLAYER_ID_KEY, id);
+    }
+    return id;
+  }
+
   function todayKey() {
     const d = new Date();
     const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -102,18 +123,91 @@
     return `${d.getFullYear()}-${m}-${day}`;
   }
 
-  function load() {
+  function normalizeState(raw) {
+    const base = defaultState();
+    if (!raw || typeof raw !== "object") return base;
+    return {
+      ...base,
+      ...raw,
+      profile: { ...base.profile, ...raw.profile },
+      games: {
+        reaction: { ...base.games.reaction, ...raw.games?.reaction },
+        guess: { ...base.games.guess, ...raw.games?.guess },
+        memory: { ...base.games.memory, ...raw.games?.memory },
+        rps: { ...base.games.rps, ...raw.games?.rps },
+        ttt: { ...base.games.ttt, ...raw.games?.ttt },
+        ladder: { ...base.games.ladder, ...raw.games?.ladder },
+      },
+      gamesPlayed: { ...base.gamesPlayed, ...raw.gamesPlayed },
+      challenge: { ...base.challenge, ...raw.challenge },
+      badges: Array.isArray(raw.badges) ? raw.badges : [],
+    };
+  }
+
+  function loadLocal() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return defaultState();
-      return { ...defaultState(), ...JSON.parse(raw), games: { ...defaultState().games, ...JSON.parse(raw).games }, gamesPlayed: { ...defaultState().gamesPlayed, ...JSON.parse(raw).gamesPlayed } };
+      return normalizeState(JSON.parse(raw));
     } catch {
       return defaultState();
     }
   }
 
-  function save(state) {
+  function saveLocal(state) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  function minNullable(a, b) {
+    if (a == null) return b;
+    if (b == null) return a;
+    return Math.min(a, b);
+  }
+
+  function maxNum(a, b) {
+    return Math.max(a || 0, b || 0);
+  }
+
+  function mergeStates(local, remote) {
+    const merged = normalizeState(local);
+    const cloud = normalizeState(remote);
+
+    merged.profile.nickname = cloud.profile.nickname || merged.profile.nickname;
+
+    merged.games.reaction.bestMs = minNullable(local.games.reaction.bestMs, cloud.games.reaction.bestMs);
+    merged.games.reaction.attempts = maxNum(local.games.reaction.attempts, cloud.games.reaction.attempts);
+
+    merged.games.guess.bestAttempts = minNullable(local.games.guess.bestAttempts, cloud.games.guess.bestAttempts);
+    merged.games.guess.clears = maxNum(local.games.guess.clears, cloud.games.guess.clears);
+
+    merged.games.memory.bestMoves = minNullable(local.games.memory.bestMoves, cloud.games.memory.bestMoves);
+    merged.games.memory.clears = maxNum(local.games.memory.clears, cloud.games.memory.clears);
+
+    merged.games.rps.wins = maxNum(local.games.rps.wins, cloud.games.rps.wins);
+    merged.games.rps.losses = maxNum(local.games.rps.losses, cloud.games.rps.losses);
+    merged.games.rps.draws = maxNum(local.games.rps.draws, cloud.games.rps.draws);
+    merged.games.rps.bestStreak = maxNum(local.games.rps.bestStreak, cloud.games.rps.bestStreak);
+    merged.games.rps.currentStreak = cloud.games.rps.currentStreak ?? merged.games.rps.currentStreak;
+
+    merged.games.ttt.wins = maxNum(local.games.ttt.wins, cloud.games.ttt.wins);
+    merged.games.ttt.losses = maxNum(local.games.ttt.losses, cloud.games.ttt.losses);
+    merged.games.ttt.draws = maxNum(local.games.ttt.draws, cloud.games.ttt.draws);
+
+    merged.games.ladder.runs = maxNum(local.games.ladder.runs, cloud.games.ladder.runs);
+
+    Object.keys(merged.gamesPlayed).forEach((key) => {
+      merged.gamesPlayed[key] = Boolean(local.gamesPlayed[key] || cloud.gamesPlayed[key]);
+    });
+
+    merged.challengeTotal = maxNum(local.challengeTotal, cloud.challengeTotal);
+    merged.badges = [...new Set([...(local.badges || []), ...(cloud.badges || [])])];
+
+    const today = todayKey();
+    if (cloud.challenge?.date === today && cloud.challenge.completed) {
+      merged.challenge = { ...cloud.challenge };
+    }
+
+    return unlockBadges(ensureTodayChallenge(merged));
   }
 
   function getChallengeForDate(dateKey) {
@@ -161,28 +255,147 @@
     return state;
   }
 
+  async function syncToCloud(state, gameId, patch) {
+    syncStatus = "syncing";
+    try {
+      const response = await fetch(getStatsApiUrl(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          playerId: getPlayerId(),
+          nickname: state.profile.nickname,
+          stats: state,
+          gameId: gameId || null,
+          patch: patch || null,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "동기화 실패");
+      }
+
+      syncStatus = "synced";
+    } catch {
+      syncStatus = "offline";
+    }
+  }
+
+  function applyRecord(state, gameId, patch) {
+    state = markPlayed(state, gameId);
+    const game = state.games[gameId];
+    if (!game) return state;
+
+    Object.assign(game, patch);
+
+    if (gameId === "reaction" && patch.lastMs != null) {
+      game.attempts = (game.attempts || 0) + 1;
+      if (game.bestMs === null || patch.lastMs < game.bestMs) {
+        game.bestMs = patch.lastMs;
+      }
+    }
+
+    if (gameId === "guess" && patch.attempts != null) {
+      game.clears = (game.clears || 0) + 1;
+      if (game.bestAttempts === null || patch.attempts < game.bestAttempts) {
+        game.bestAttempts = patch.attempts;
+      }
+    }
+
+    if (gameId === "memory" && patch.moves != null) {
+      game.clears = (game.clears || 0) + 1;
+      if (game.bestMoves === null || patch.moves < game.bestMoves) {
+        game.bestMoves = patch.moves;
+      }
+    }
+
+    if (gameId === "rps" && patch.currentStreak != null) {
+      game.currentStreak = patch.currentStreak;
+      if (game.currentStreak > (game.bestStreak || 0)) {
+        game.bestStreak = game.currentStreak;
+      }
+    }
+
+    if (gameId === "ladder" && patch.runs != null) {
+      game.runs = patch.runs;
+    }
+
+    state = tryCompleteChallenge(state);
+    state = unlockBadges(state);
+    return state;
+  }
+
   window.MiniGameStats = {
+    getPlayerId,
+
+    getSyncStatus() {
+      return syncStatus;
+    },
+
+    getRecentRecords() {
+      return recentRecords;
+    },
+
+    async hydrate() {
+      if (hydratePromise) return hydratePromise;
+
+      hydratePromise = (async () => {
+        syncStatus = "syncing";
+        try {
+          const response = await fetch(`${getStatsApiUrl()}?playerId=${encodeURIComponent(getPlayerId())}`);
+          if (!response.ok) {
+            syncStatus = "offline";
+            return loadLocal();
+          }
+
+          const data = await response.json();
+          recentRecords = data.recentRecords || [];
+
+          if (data.player?.stats) {
+            const merged = mergeStates(loadLocal(), data.player.stats);
+            if (data.player.nickname) {
+              merged.profile.nickname = data.player.nickname;
+            }
+            saveLocal(merged);
+            syncStatus = "synced";
+            return merged;
+          }
+
+          syncStatus = "synced";
+          return loadLocal();
+        } catch {
+          syncStatus = "offline";
+          return loadLocal();
+        } finally {
+          hydratePromise = null;
+        }
+      })();
+
+      return hydratePromise;
+    },
+
     getState() {
-      return ensureTodayChallenge(load());
+      return ensureTodayChallenge(loadLocal());
     },
 
     setNickname(nickname) {
-      const state = load();
+      let state = loadLocal();
       state.profile.nickname = nickname.trim() || "플레이어";
-      save(state);
+      saveLocal(state);
+      syncToCloud(state);
       return state.profile.nickname;
     },
 
     getDailyChallenge() {
-      const state = ensureTodayChallenge(load());
-      save(state);
+      const state = ensureTodayChallenge(loadLocal());
+      saveLocal(state);
       const def = CHALLENGE_POOL.find((c) => c.id === state.challenge.id) || CHALLENGE_POOL[0];
       return { ...def, completed: state.challenge.completed, date: state.challenge.date };
     },
 
     getBadges() {
-      const state = unlockBadges(load());
-      save(state);
+      const state = unlockBadges(loadLocal());
+      saveLocal(state);
       return BADGES.map((badge) => ({
         ...badge,
         unlocked: state.badges.includes(badge.id),
@@ -190,56 +403,16 @@
     },
 
     record(gameId, patch) {
-      let state = load();
-      state = markPlayed(state, gameId);
-
-      const game = state.games[gameId];
-      if (!game) return state;
-
-      Object.assign(game, patch);
-
-      if (gameId === "reaction" && patch.lastMs != null) {
-        game.attempts = (game.attempts || 0) + 1;
-        if (game.bestMs === null || patch.lastMs < game.bestMs) {
-          game.bestMs = patch.lastMs;
-        }
-      }
-
-      if (gameId === "guess" && patch.attempts != null) {
-        game.clears = (game.clears || 0) + 1;
-        if (game.bestAttempts === null || patch.attempts < game.bestAttempts) {
-          game.bestAttempts = patch.attempts;
-        }
-      }
-
-      if (gameId === "memory" && patch.moves != null) {
-        game.clears = (game.clears || 0) + 1;
-        if (game.bestMoves === null || patch.moves < game.bestMoves) {
-          game.bestMoves = patch.moves;
-        }
-      }
-
-      if (gameId === "rps") {
-        if (patch.currentStreak != null) {
-          game.currentStreak = patch.currentStreak;
-          if (game.currentStreak > (game.bestStreak || 0)) {
-            game.bestStreak = game.currentStreak;
-          }
-        }
-      }
-
-      if (gameId === "ladder" && patch.runs != null) {
-        game.runs = patch.runs;
-      }
-
-      state = tryCompleteChallenge(state);
-      state = unlockBadges(state);
-      save(state);
+      let state = applyRecord(loadLocal(), gameId, patch);
+      saveLocal(state);
+      syncToCloud(state, gameId, patch);
       return state;
     },
 
     getGameStats(gameId) {
-      return load().games[gameId] || null;
+      return loadLocal().games[gameId] || null;
     },
   };
+
+  MiniGameStats.hydrate();
 })();
