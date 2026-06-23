@@ -14,6 +14,10 @@ const MAX_PULL = 100;
 const LAUNCH_POWER = 0.22;
 const BIRD_R = 16;
 const MAX_BIRDS = 10;
+const PARACHUTE_COUNT = 20;
+const PARACHUTE_GRAVITY = 0.018;
+const PARACHUTE_MIN_VY = 0.12;
+const PARACHUTE_MAX_VY = 0.72;
 
 let width = 800;
 let height = 460;
@@ -82,8 +86,8 @@ function pigParachute(x, startY, r = 12) {
     x,
     y: startY,
     r,
-    vx: (Math.random() - 0.5) * 0.4,
-    vy: 0.35,
+    vx: (Math.random() - 0.5) * 0.25,
+    vy: 0.12,
     grounded: false,
     parachute: true,
     sway: Math.random() * Math.PI * 2,
@@ -141,9 +145,11 @@ function createLevel() {
 
   const paraLeft = x0 + 15;
   const paraRight = x0 + Math.min(width * 0.58, 480) - 15;
-  for (let i = 0; i < 8; i += 1) {
-    const px = paraLeft + (i / 7) * (paraRight - paraLeft);
-    pigs.push(pigParachute(px, height * (0.03 + (i % 4) * 0.08)));
+  for (let i = 0; i < PARACHUTE_COUNT; i += 1) {
+    const px = paraLeft + (i / (PARACHUTE_COUNT - 1)) * (paraRight - paraLeft);
+    const layer = i % 6;
+    const wave = Math.floor(i / 6);
+    pigs.push(pigParachute(px, height * (0.02 + layer * 0.055 + wave * 0.025)));
   }
 }
 
@@ -470,10 +476,10 @@ function updatePigs() {
     if (!pig.alive) return;
 
     if (pig.parachute) {
-      pig.sway += 0.04;
-      pig.vy += BLOCK_GRAVITY * 0.07;
-      pig.vy = Math.min(Math.max(pig.vy, 0.4), 1.5);
-      pig.vx += Math.sin(pig.sway) * 0.025;
+      pig.sway += 0.03;
+      pig.vy += PARACHUTE_GRAVITY;
+      pig.vy = Math.min(Math.max(pig.vy, PARACHUTE_MIN_VY), PARACHUTE_MAX_VY);
+      pig.vx += Math.sin(pig.sway) * 0.012;
       pig.x += pig.vx;
       pig.y += pig.vy;
 
