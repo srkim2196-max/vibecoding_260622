@@ -37,7 +37,9 @@ function slingPos() {
   return { x: width * SLING.x, y: height * SLING.y };
 }
 
-function makeBlock(x, y, w, h, hp = 2) {
+const BLOCK_H = 22;
+
+function makeBlock(x, y, w, h, hp = 2, pinned = false) {
   return {
     id: blockIdCounter++,
     x,
@@ -52,28 +54,57 @@ function makeBlock(x, y, w, h, hp = 2) {
     va: 0,
     dynamic: false,
     debris: false,
+    pinned,
+    alive: true,
+  };
+}
+
+function addPlank(x, bottomY, w, h = BLOCK_H, hp = 2, pinned = true) {
+  blocks.push(makeBlock(x, bottomY, w, h, hp, pinned));
+}
+
+function pigOnPlank(cx, plankTop, r = 18) {
+  return {
+    x: cx,
+    y: plankTop - r - 2,
+    r,
+    vx: 0,
+    vy: 0,
+    grounded: true,
     alive: true,
   };
 }
 
 function createLevel() {
-  const baseX = width * 0.48;
   const g = groundY();
+  const baseX = width * 0.5;
   blockIdCounter = 0;
+  blocks = [];
 
-  blocks = [
-    makeBlock(baseX, g, 110, 22, 2),
-    makeBlock(baseX + 25, g - 70, 55, 22, 2),
-    makeBlock(baseX + 85, g - 70, 55, 22, 2),
-    makeBlock(baseX + 25, g - 115, 115, 22, 2),
-    makeBlock(baseX + 175, g, 22, 75, 2),
-    makeBlock(baseX + 140, g - 95, 90, 22, 2),
-  ];
+  // 왼쪽: 단단한 2층 탑
+  const left = baseX - 55;
+  addPlank(left, g, 108);
+  addPlank(left + 8, g - BLOCK_H, 42);
+  addPlank(left + 58, g - BLOCK_H, 42);
+  addPlank(left + 8, g - BLOCK_H * 2, 92);
+
+  // 가운데: 아슬아슬한 cantilever 보 (기둥에서 살짝만 걸침)
+  const mid = baseX + 72;
+  addPlank(mid, g, 26, 68);
+  addPlank(mid - 42, g - 68, 88);
+
+  // 오른쪽: 3층 좁은 탑
+  const right = baseX + 168;
+  addPlank(right, g, 76);
+  addPlank(right + 6, g - BLOCK_H, 28);
+  addPlank(right + 42, g - BLOCK_H, 28);
+  addPlank(right + 6, g - BLOCK_H * 2, 64);
+  addPlank(right + 6, g - BLOCK_H * 3, 64);
 
   pigs = [
-    { x: baseX + 55, y: g - 138, r: 18, vx: 0, vy: 0, alive: true },
-    { x: baseX + 165, y: g - 125, r: 18, vx: 0, vy: 0, alive: true },
-    { x: baseX + 186, y: g - 52, r: 16, vx: 0, vy: 0, alive: true },
+    pigOnPlank(left + 54, g - BLOCK_H * 3, 18),
+    pigOnPlank(mid - 18, g - 68 - BLOCK_H, 17),
+    pigOnPlank(right + 38, g - BLOCK_H * 4, 16),
   ];
 }
 
@@ -145,36 +176,65 @@ function circleCircleHit(x1, y1, r1, x2, y2, r2) {
   return dist(x1, y1, x2, y2) < r1 + r2;
 }
 
-function blockCenter(block) {
-  return { x: block.x + block.w / 2, y: block.y - block.h / 2 };
+function blockTop(block) {
+  return block.y - block.h;
+}
+
+function horizontalOverlap(ax, aw, bx, bw) {
+  return Math.min(ax + aw, bx + bw) - Math.max(ax, bx);
 }
 
 function isBlockSupported(block) {
   const g = groundY();
-  if (Math.abs(block.y - g) < 5) return true;
+  if (Math.abs(block.y - g) < 4) return true;
 
   for (const other of blocks) {
     if (!other.alive || other.id === block.id) continue;
-    const gap = block.y - other.y;
-    if (gap < 0 || gap > 10) continue;
-    const overlap = Math.min(block.x + block.w, other.x + other.w) - Math.max(block.x, other.x);
-    if (overlap > Math.min(block.w, other.w) * 0.3) {
-      if (!other.dynamic || (Math.abs(other.vy) < 1.5 && Math.abs(other.vx) < 1.5)) {
-        return true;
-      }
+    const otherTop = blockTop(other);
+    if (Math.abs(block.y - otherTop) > 6) continue;
+    if (horizontalOverlap(block.x, block.w, other.x, other.w) > block.w * 0.22) {
+      return true;
     }
   }
   return false;
+}
+
+function isPigSupported(pig) {
+  const g = groundY();
+  const foot = pig.y + pig.r;
+  if (Math.abs(foot - g) < 5) return true;
+
+  for (const block of blocks) {
+    if (!block.alive) continue;
+    const top = blockTop(block);
+    if (Math.abs(foot - top) > 8) continue;
+    if (pig.x + pig.r > block.x + 4 && pig.x - pig.r < block.x + block.w - 4) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function wakeBlocksAbove(removedBlock) {
+  const removedTop = blockTop(removedBlock);
+  blocks.forEach((block) => {
+    if (!block.alive || block.id === removedBlock.id) return;
+    if (Math.abs(block.y - removedTop) <= 8) {
+      block.pinned = false;
+    }
+  });
 }
 
 function breakBlock(block) {
   if (!block.alive) return;
 
   if (block.debris || block.w < 26 || block.h < 14) {
+    wakeBlocksAbove(block);
     block.alive = false;
     return;
   }
 
+  wakeBlocksAbove(block);
   block.alive = false;
   score += 100;
 
@@ -215,6 +275,7 @@ function hitBlock(block, force) {
 
 function hitPig(pig, force) {
   if (!pig.alive) return;
+  pig.grounded = false;
   if (force > 2.5) {
     pig.alive = false;
     score += 500;
@@ -229,6 +290,7 @@ function applyBirdBlockCollision(block, speed) {
   bird.x += hit.nx * hit.overlap;
   bird.y += hit.ny * hit.overlap;
 
+  block.pinned = false;
   block.dynamic = true;
   block.vx += bird.vx * 0.22 + hit.nx * speed * 0.08;
   block.vy += bird.vy * 0.18 + hit.ny * speed * 0.06 - speed * 0.04;
@@ -273,11 +335,11 @@ function resolveBlockPair(a, b) {
     }
     if (a.dynamic) a.vx *= -0.25;
     if (b.dynamic) b.vx *= -0.25;
-    if (a.dynamic && !b.dynamic) {
+    if (a.dynamic && !b.dynamic && !b.pinned) {
       b.dynamic = true;
       b.vx += a.vx * 0.15;
     }
-    if (b.dynamic && !a.dynamic) {
+    if (b.dynamic && !a.dynamic && !a.pinned) {
       a.dynamic = true;
       a.vx += b.vx * 0.15;
     }
@@ -299,10 +361,10 @@ function updateBlocks() {
   const g = groundY();
 
   blocks.forEach((block) => {
-    if (!block.alive || block.dynamic) return;
+    if (!block.alive || block.dynamic || block.pinned) return;
     if (!isBlockSupported(block)) {
       block.dynamic = true;
-      block.vy += 0.4;
+      block.vy += 0.3;
     }
   });
 
@@ -347,12 +409,15 @@ function updateBlocks() {
 
   alive.forEach((block) => {
     const speed = Math.hypot(block.vx, block.vy);
+    if (speed < 1.2 && block.pinned) return;
     pigs.forEach((pig) => {
       if (!pig.alive) return;
-      if (circleRectHit(pig.x, pig.y, pig.r, block.x, block.y - block.h, block.w, block.h)) {
-        pig.vx += block.vx * 0.3;
-        pig.vy += block.vy * 0.3 - 1;
-        hitPig(pig, Math.max(speed, 3));
+      if (circleRectHit(pig.x, pig.y, pig.r, block.x, blockTop(block), block.w, block.h)) {
+        if (speed > 2) {
+          pig.vx += block.vx * 0.3;
+          pig.vy += block.vy * 0.3 - 1;
+          hitPig(pig, speed);
+        }
       }
     });
   });
@@ -362,6 +427,12 @@ function updatePigs() {
   const g = groundY();
   pigs.forEach((pig) => {
     if (!pig.alive) return;
+
+    if (pig.grounded) {
+      if (isPigSupported(pig)) return;
+      pig.grounded = false;
+    }
+
     pig.vy += BLOCK_GRAVITY * 0.6;
     pig.x += pig.vx;
     pig.y += pig.vy;
@@ -371,7 +442,13 @@ function updatePigs() {
       pig.y = g - pig.r;
       pig.vy *= -0.3;
       pig.vx *= 0.7;
-      if (Math.abs(pig.vy) < 0.8) pig.vy = 0;
+      if (Math.abs(pig.vy) < 0.8) {
+        pig.vy = 0;
+        pig.grounded = true;
+      }
+    } else if (isPigSupported(pig) && Math.abs(pig.vy) < 1) {
+      pig.vy = 0;
+      pig.grounded = true;
     }
   });
 }
