@@ -2,6 +2,7 @@ const nicknameInput = document.getElementById("profile-nickname");
 const profileForm = document.getElementById("profile-form");
 const greetingEl = document.getElementById("profile-greeting");
 const syncStatusEl = document.getElementById("sync-status");
+const syncDebugEl = document.getElementById("sync-debug");
 const challengeTitle = document.getElementById("challenge-title");
 const challengeDesc = document.getElementById("challenge-desc");
 const challengeStatus = document.getElementById("challenge-status");
@@ -10,6 +11,7 @@ const challengeCard = document.getElementById("challenge-card");
 const recordGrid = document.getElementById("record-grid");
 const badgeGrid = document.getElementById("badge-grid");
 const recentRecordsEl = document.getElementById("recent-records");
+const retrySyncBtn = document.getElementById("retry-sync");
 
 const RECORDS = [
   { id: "reaction", icon: "⚡", name: "반응속도", format: (g) => (g.bestMs != null ? `최고 ${Math.round(g.bestMs)}ms` : "기록 없음") },
@@ -32,7 +34,7 @@ const GAME_NAMES = {
 function formatSyncStatus(status) {
   if (status === "synced") return "☁️ Supabase 동기화 완료";
   if (status === "syncing") return "☁️ Supabase 동기화 중…";
-  if (status === "offline") return "⚠️ 오프라인 · 로컬 저장만 사용 중";
+  if (status === "offline") return "⚠️ Supabase 동기화 실패";
   return "기록 준비 중…";
 }
 
@@ -48,11 +50,26 @@ function render() {
   const challenge = MiniGameStats.getDailyChallenge();
   const badges = MiniGameStats.getBadges();
   const records = MiniGameStats.getRecentRecords();
+  const syncStatus = MiniGameStats.getSyncStatus();
+  const lastError = MiniGameStats.getLastSyncError();
+  const apiUrl = MiniGameStats.getStatsApiUrl();
 
   nicknameInput.value = state.profile.nickname;
   greetingEl.textContent = `안녕하세요, ${state.profile.nickname}님! 오늘도 미니 게임에 도전해 보세요.`;
-  syncStatusEl.textContent = formatSyncStatus(MiniGameStats.getSyncStatus());
-  syncStatusEl.className = `sync-status sync-${MiniGameStats.getSyncStatus()}`;
+  syncStatusEl.textContent = formatSyncStatus(syncStatus);
+  syncStatusEl.className = `sync-status sync-${syncStatus}`;
+
+  if (syncStatus === "synced") {
+    syncDebugEl.textContent = `API: ${apiUrl} · 플레이어 ID: ${MiniGameStats.getPlayerId().slice(0, 8)}…`;
+    syncDebugEl.className = "sync-debug sync-debug-ok";
+  } else {
+    syncDebugEl.innerHTML = [
+      `API: ${apiUrl}`,
+      lastError ? `오류: ${lastError}` : "오류: API 서버에 연결할 수 없습니다.",
+      "Supabase SQL(schema.sql) 실행 여부와 Vercel Redeploy를 확인해 주세요.",
+    ].join("<br>");
+    syncDebugEl.className = "sync-debug sync-debug-error";
+  }
 
   challengeTitle.textContent = `${challenge.icon} ${challenge.title}`;
   challengeDesc.textContent = challenge.desc;
@@ -94,7 +111,9 @@ function render() {
     .join("");
 
   if (records.length === 0) {
-    recentRecordsEl.innerHTML = "<li>아직 클라우드 플레이 기록이 없습니다.</li>";
+    recentRecordsEl.innerHTML = syncStatus === "synced"
+      ? "<li>아직 클라우드 플레이 기록이 없습니다. 게임을 플레이하면 여기에 표시됩니다.</li>"
+      : "<li>동기화에 실패해 기록을 불러오지 못했습니다.</li>";
   } else {
     recentRecordsEl.innerHTML = records.map((row) => `<li>${formatRecordRow(row)}</li>`).join("");
   }
@@ -103,6 +122,11 @@ function render() {
 profileForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   MiniGameStats.setNickname(nicknameInput.value);
+  await MiniGameStats.hydrate();
+  render();
+});
+
+retrySyncBtn.addEventListener("click", async () => {
   await MiniGameStats.hydrate();
   render();
 });

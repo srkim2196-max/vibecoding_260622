@@ -73,6 +73,7 @@
 
   let syncStatus = "idle";
   let recentRecords = [];
+  let lastSyncError = "";
   let hydratePromise = null;
 
   function defaultState() {
@@ -101,10 +102,21 @@
   }
 
   function getStatsApiUrl() {
+    const override = localStorage.getItem("mini-game-api-base");
+    if (override) return `${override.replace(/\/$/, "")}/api/stats`;
     if (window.APP_CONFIG?.statsApiUrl) return window.APP_CONFIG.statsApiUrl;
     const hostname = window.location.hostname;
     if (hostname.includes("vercel.app") || hostname === "localhost") return "/api/stats";
     return "https://vibecoding-260622.vercel.app/api/stats";
+  }
+
+  async function readError(response) {
+    try {
+      const data = await response.json();
+      return data.error || `HTTP ${response.status}`;
+    } catch {
+      return `HTTP ${response.status}`;
+    }
   }
 
   function getPlayerId() {
@@ -257,6 +269,7 @@
 
   async function syncToCloud(state, gameId, patch) {
     syncStatus = "syncing";
+    lastSyncError = "";
     try {
       const response = await fetch(getStatsApiUrl(), {
         method: "POST",
@@ -271,13 +284,16 @@
       });
 
       if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || "동기화 실패");
+        lastSyncError = await readError(response);
+        throw new Error(lastSyncError);
       }
 
       syncStatus = "synced";
-    } catch {
+    } catch (error) {
       syncStatus = "offline";
+      if (!lastSyncError && error instanceof Error) {
+        lastSyncError = error.message;
+      }
     }
   }
 
@@ -332,6 +348,12 @@
       return syncStatus;
     },
 
+    getStatsApiUrl,
+
+    getLastSyncError() {
+      return lastSyncError;
+    },
+
     getRecentRecords() {
       return recentRecords;
     },
@@ -341,9 +363,11 @@
 
       hydratePromise = (async () => {
         syncStatus = "syncing";
+        lastSyncError = "";
         try {
           const response = await fetch(`${getStatsApiUrl()}?playerId=${encodeURIComponent(getPlayerId())}`);
           if (!response.ok) {
+            lastSyncError = await readError(response);
             syncStatus = "offline";
             return loadLocal();
           }
@@ -357,14 +381,13 @@
               merged.profile.nickname = data.player.nickname;
             }
             saveLocal(merged);
-            syncStatus = "synced";
-            return merged;
           }
 
           syncStatus = "synced";
           return loadLocal();
-        } catch {
+        } catch (error) {
           syncStatus = "offline";
+          lastSyncError = error instanceof Error ? error.message : "네트워크 오류";
           return loadLocal();
         } finally {
           hydratePromise = null;
@@ -413,6 +436,4 @@
       return loadLocal().games[gameId] || null;
     },
   };
-
-  MiniGameStats.hydrate();
 })();

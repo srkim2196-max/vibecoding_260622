@@ -1155,8 +1155,31 @@ body {
   color: var(--link-blue);
 }
 
-.sync-offline {
+.sync-offline,
+.sync-offline.sync-offline {
   color: var(--semantic-error);
+}
+
+.sync-debug {
+  margin: var(--spacing-sm) 0 var(--spacing-md);
+  padding: 10px 12px;
+  border-radius: var(--rounded-md);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.sync-debug-ok {
+  background: rgba(0, 122, 90, 0.08);
+  color: var(--semantic-success);
+}
+
+.sync-debug-error {
+  background: rgba(204, 65, 23, 0.08);
+  color: var(--semantic-error);
+}
+
+.sync-retry-btn {
+  margin-top: var(--spacing-sm);
 }
 
 .recent-records {

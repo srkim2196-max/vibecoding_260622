@@ -50,6 +50,13 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === "GET") {
+    if (req.query?.health === "1") {
+      return res.status(200).json({
+        ok: true,
+        supabaseConfigured: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY),
+      });
+    }
+
     const playerId = req.query?.playerId;
     if (!playerId) {
       return res.status(400).json({ error: "playerId가 필요합니다." });
