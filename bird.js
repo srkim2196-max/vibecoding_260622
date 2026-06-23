@@ -2,6 +2,7 @@ const canvas = document.getElementById("bird-canvas");
 const ctx = canvas.getContext("2d");
 const scoreEl = document.getElementById("bird-score");
 const leftEl = document.getElementById("bird-left");
+const pigsEl = document.getElementById("bird-pigs");
 const bestEl = document.getElementById("bird-best");
 const statusEl = document.getElementById("bird-status");
 const restartBtn = document.getElementById("bird-restart");
@@ -12,7 +13,7 @@ const SLING = { x: 0.14, y: 0.62 };
 const MAX_PULL = 100;
 const LAUNCH_POWER = 0.22;
 const BIRD_R = 16;
-const MAX_BIRDS = 3;
+const MAX_BIRDS = 10;
 
 let width = 800;
 let height = 460;
@@ -63,7 +64,7 @@ function addPlank(x, bottomY, w, h = BLOCK_H, hp = 2, pinned = true) {
   blocks.push(makeBlock(x, bottomY, w, h, hp, pinned));
 }
 
-function pigOnPlank(cx, plankTop, r = 18) {
+function pigOnPlank(cx, plankTop, r = 12) {
   return {
     x: cx,
     y: plankTop - r - 2,
@@ -71,41 +72,79 @@ function pigOnPlank(cx, plankTop, r = 18) {
     vx: 0,
     vy: 0,
     grounded: true,
+    parachute: false,
     alive: true,
   };
 }
 
+function pigParachute(x, startY, r = 12) {
+  return {
+    x,
+    y: startY,
+    r,
+    vx: (Math.random() - 0.5) * 0.4,
+    vy: 0.35,
+    grounded: false,
+    parachute: true,
+    sway: Math.random() * Math.PI * 2,
+    alive: true,
+  };
+}
+
+function addPigRow(plankTop, count, left, right, r = 12) {
+  for (let i = 0; i < count; i += 1) {
+    const t = count === 1 ? 0.5 : i / (count - 1);
+    pigs.push(pigOnPlank(left + (right - left) * t, plankTop, r));
+  }
+}
+
 function createLevel() {
   const g = groundY();
-  const baseX = width * 0.5;
+  const x0 = width * 0.36;
+  const H = BLOCK_H;
   blockIdCounter = 0;
   blocks = [];
+  pigs = [];
 
-  // 왼쪽: 단단한 2층 탑
-  const left = baseX - 55;
-  addPlank(left, g, 108);
-  addPlank(left + 8, g - BLOCK_H, 42);
-  addPlank(left + 58, g - BLOCK_H, 42);
-  addPlank(left + 8, g - BLOCK_H * 2, 92);
+  addPlank(x0, g, Math.min(width * 0.58, 480));
 
-  // 가운데: 아슬아슬한 cantilever 보 (기둥에서 살짝만 걸침)
-  const mid = baseX + 72;
-  addPlank(mid, g, 26, 68);
-  addPlank(mid - 42, g - 68, 88);
+  const t1 = x0 + 8;
+  addPlank(t1, g, 88);
+  addPigRow(g - H, 2, t1 + 18, t1 + 70);
+  addPlank(t1 + 6, g - H, 76);
+  addPlank(t1 + 20, g - H * 2, 52);
+  addPigRow(g - H * 2, 2, t1 + 28, t1 + 64);
 
-  // 오른쪽: 3층 좁은 탑
-  const right = baseX + 168;
-  addPlank(right, g, 76);
-  addPlank(right + 6, g - BLOCK_H, 28);
-  addPlank(right + 42, g - BLOCK_H, 28);
-  addPlank(right + 6, g - BLOCK_H * 2, 64);
-  addPlank(right + 6, g - BLOCK_H * 3, 64);
+  const t2 = x0 + 118;
+  addPlank(t2, g, 22, 74);
+  addPlank(t2 - 48, g - 74, 96);
+  addPigRow(g - 74 - H, 3, t2 - 40, t2 + 20);
 
-  pigs = [
-    pigOnPlank(left + 54, g - BLOCK_H * 3, 18),
-    pigOnPlank(mid - 18, g - 68 - BLOCK_H, 17),
-    pigOnPlank(right + 38, g - BLOCK_H * 4, 16),
-  ];
+  const t3 = x0 + 200;
+  addPlank(t3, g, 72);
+  addPigRow(g - H, 2, t3 + 12, t3 + 58);
+  addPlank(t3 + 4, g - H, 64);
+  addPlank(t3 + 8, g - H * 2, 56);
+  addPigRow(g - H * 2, 2, t3 + 16, t3 + 52);
+  addPlank(t3 + 10, g - H * 3, 48);
+  addPigRow(g - H * 3, 2, t3 + 18, t3 + 48);
+
+  const t4 = x0 + 290;
+  addPlank(t4, g, 80);
+  addPigRow(g - H, 2, t4 + 10, t4 + 66);
+  for (let f = 1; f <= 3; f += 1) {
+    addPlank(t4 + 5, g - H * f, 70);
+    addPigRow(g - H * (f + 1), f === 3 ? 1 : 2, t4 + 14, t4 + 62);
+  }
+
+  addPigRow(g - H, 2, x0 + 140, x0 + 230);
+
+  const paraLeft = x0 + 15;
+  const paraRight = x0 + Math.min(width * 0.58, 480) - 15;
+  for (let i = 0; i < 8; i += 1) {
+    const px = paraLeft + (i / 7) * (paraRight - paraLeft);
+    pigs.push(pigParachute(px, height * (0.03 + (i % 4) * 0.08)));
+  }
 }
 
 function resetBirdOnSling() {
@@ -120,6 +159,7 @@ function resetBirdOnSling() {
 function updateHud() {
   scoreEl.textContent = String(score);
   leftEl.textContent = String(birdsLeft);
+  if (pigsEl) pigsEl.textContent = String(alivePigs());
   bestEl.textContent = String(bestScore);
 }
 
@@ -276,6 +316,7 @@ function hitBlock(block, force) {
 function hitPig(pig, force) {
   if (!pig.alive) return;
   pig.grounded = false;
+  if (pig.parachute && force > 1.5) pig.parachute = false;
   if (force > 2.5) {
     pig.alive = false;
     score += 500;
@@ -427,6 +468,29 @@ function updatePigs() {
   const g = groundY();
   pigs.forEach((pig) => {
     if (!pig.alive) return;
+
+    if (pig.parachute) {
+      pig.sway += 0.04;
+      pig.vy += BLOCK_GRAVITY * 0.07;
+      pig.vy = Math.min(Math.max(pig.vy, 0.4), 1.5);
+      pig.vx += Math.sin(pig.sway) * 0.025;
+      pig.x += pig.vx;
+      pig.y += pig.vy;
+
+      if (pig.y + pig.r >= g) {
+        pig.y = g - pig.r;
+        pig.parachute = false;
+        pig.grounded = true;
+        pig.vy = 0;
+        pig.vx *= 0.5;
+      } else if (isPigSupported(pig)) {
+        pig.parachute = false;
+        pig.grounded = true;
+        pig.vy = 0;
+        pig.vx *= 0.5;
+      }
+      return;
+    }
 
     if (pig.grounded) {
       if (isPigSupported(pig)) return;
@@ -685,22 +749,50 @@ function drawBlocks() {
   });
 }
 
+function drawParachute(pig) {
+  const top = pig.y - pig.r - 6;
+  const span = pig.r * 1.55;
+  ctx.fillStyle = "rgba(239, 83, 80, 0.92)";
+  ctx.beginPath();
+  ctx.moveTo(pig.x - span, top + 4);
+  ctx.quadraticCurveTo(pig.x, top - span * 0.55, pig.x + span, top + 4);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = "rgba(183, 28, 28, 0.7)";
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.strokeStyle = "rgba(80, 80, 80, 0.65)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pig.x - span * 0.7, top + 3);
+  ctx.lineTo(pig.x - 4, pig.y - 2);
+  ctx.moveTo(pig.x + span * 0.7, top + 3);
+  ctx.lineTo(pig.x + 4, pig.y - 2);
+  ctx.stroke();
+}
+
+function drawPigBody(pig) {
+  ctx.fillStyle = "#7cb342";
+  ctx.beginPath();
+  ctx.arc(pig.x, pig.y, pig.r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#558b2f";
+  ctx.beginPath();
+  ctx.ellipse(pig.x, pig.y + 3, pig.r * 0.55, pig.r * 0.35, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#1d1d1d";
+  ctx.beginPath();
+  ctx.arc(pig.x - 4, pig.y - 2, 2, 0, Math.PI * 2);
+  ctx.arc(pig.x + 4, pig.y - 2, 2, 0, Math.PI * 2);
+  ctx.fill();
+}
+
 function drawPigs() {
   pigs.forEach((pig) => {
     if (!pig.alive) return;
-    ctx.fillStyle = "#7cb342";
-    ctx.beginPath();
-    ctx.arc(pig.x, pig.y, pig.r, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#558b2f";
-    ctx.beginPath();
-    ctx.ellipse(pig.x, pig.y + 4, pig.r * 0.55, pig.r * 0.35, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#1d1d1d";
-    ctx.beginPath();
-    ctx.arc(pig.x - 5, pig.y - 3, 2.5, 0, Math.PI * 2);
-    ctx.arc(pig.x + 5, pig.y - 3, 2.5, 0, Math.PI * 2);
-    ctx.fill();
+    if (pig.parachute) drawParachute(pig);
+    drawPigBody(pig);
   });
 }
 
@@ -768,7 +860,7 @@ function startGame() {
   createLevel();
   resetBirdOnSling();
   updateHud();
-  setStatus("새를 뒤로 당겼다가 놓으면 발사됩니다! (왼쪽·아래로 당기세요)");
+  setStatus(`돼지 ${pigs.length}마리! 낙하산 돼지도 조심하세요. 새를 당겨 발사하세요.`);
 }
 
 canvas.addEventListener("mousedown", onDown);
